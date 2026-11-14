@@ -49,15 +49,20 @@ export function RouteMap({ route, lotCode }: RouteMapProps) {
 
     points.forEach((point, index) => {
       const isOrigin = point.kind === 'origin'
+      const popup = document.createElement('div')
+      const heading = document.createElement('strong')
+      heading.textContent = isOrigin ? 'Vùng trồng xuất phát' : 'Điểm dừng'
+      const label = document.createElement('span')
+      label.textContent = point.name
+      popup.append(heading, document.createElement('br'), label)
+
       L.marker(latlngs[index], {
         icon: isOrigin ? ORIGIN_MARKER_ICON : STOP_MARKER_ICON,
         title: point.name,
         alt: point.name,
       })
         .addTo(map)
-        .bindPopup(
-          `<strong>${isOrigin ? 'Vùng trồng xuất phát' : 'Điểm dừng'}</strong><br/>${point.name}`,
-        )
+        .bindPopup(popup)
     })
 
     if (latlngs.length > 1) {

@@ -69,15 +69,17 @@ def detect_temperature_violations(
     max_temp_celsius: float = 8.0,
     delay_minutes: int = 30,
     merge_gap_minutes: int = 5,
+    max_sensor_gap_minutes: float = 60.0,
 ) -> list[DetectedViolation]:
     """Detect sustained cold chain violations across a stream of temperature readings.
 
     Rules:
     1. A temperature reading is out-of-range if T > max_temp_celsius (high_temp)
        or T < min_temp_celsius (low_temp).
-    2. Consecutive out-of-range readings of the same violation type are grouped.
-    3. If temperature returns to normal for <= merge_gap_minutes, the gap is merged
-       into the ongoing excursion.
+    2. Consecutive out-of-range readings of the same violation type are grouped
+       while sensor intervals stay within max_sensor_gap_minutes.
+    3. If temperature returns to normal for <= merge_gap_minutes, the brief safe
+       recovery is merged into the ongoing excursion; longer safe gaps end it.
     4. If the total excursion duration (from started_at to ended_at) is >= delay_minutes,
        it is confirmed as a violation. Shorter excursions (< delay_minutes) are filtered
        out as transient noise (e.g. opening reefer container doors).
@@ -98,12 +100,25 @@ def detect_temperature_violations(
     curr_type = ""
     curr_start: datetime | None = None
     curr_last_out: datetime | None = None
-    curr_peak = 0.0
+    curr_peak: float | None = None
+    last_safe_at: datetime | None = None
 
     def finalize_candidate() -> None:
-        nonlocal in_excursion, curr_type, curr_start, curr_last_out, curr_peak
-        if not in_excursion or curr_start is None or curr_last_out is None:
+        nonlocal \
+            in_excursion, \
+            curr_type, \
+            curr_start, \
+            curr_last_out, \
+            curr_peak, \
+            last_safe_at
+        if (
+            not in_excursion
+            or curr_start is None
+            or curr_last_out is None
+            or curr_peak is None
+        ):
             in_excursion = False
+            last_safe_at = None
             return
 
         duration = (curr_last_out - curr_start).total_seconds() / 60.0
@@ -119,8 +134,26 @@ def detect_temperature_violations(
             )
 
         in_excursion = False
+        curr_type = ""
         curr_start = None
         curr_last_out = None
+        curr_peak = None
+        last_safe_at = None
+
+    def start_excursion(recorded_at: datetime, reading_type: str, temp: float) -> None:
+        nonlocal \
+            in_excursion, \
+            curr_type, \
+            curr_start, \
+            curr_last_out, \
+            curr_peak, \
+            last_safe_at
+        in_excursion = True
+        curr_type = reading_type
+        curr_start = recorded_at
+        curr_last_out = recorded_at
+        curr_peak = temp
+        last_safe_at = None
 
     for recorded_at, temp in sorted_readings:
         is_high = temp > max_temp_celsius
@@ -130,43 +163,37 @@ def detect_temperature_violations(
 
         if is_out:
             if not in_excursion:
-                # Start new excursion
-                in_excursion = True
-                curr_type = reading_type
-                curr_start = recorded_at
-                curr_last_out = recorded_at
-                curr_peak = temp
-            else:
-                # Already in excursion
-                if reading_type == curr_type:
-                    gap_minutes = (recorded_at - curr_last_out).total_seconds() / 60.0  # type: ignore[operator]
-                    if gap_minutes <= merge_gap_minutes:
-                        # Continue / merge into excursion
-                        curr_last_out = recorded_at
-                        if curr_type == "high_temp":
-                            curr_peak = max(curr_peak, temp)
-                        else:
-                            curr_peak = min(curr_peak, temp)
-                    else:
-                        # Gap too long (> merge_gap_minutes): finalize previous, start new
-                        finalize_candidate()
-                        in_excursion = True
-                        curr_type = reading_type
-                        curr_start = recorded_at
-                        curr_last_out = recorded_at
-                        curr_peak = temp
-                else:
-                    # Type changed (e.g. from high to low)
-                    finalize_candidate()
-                    in_excursion = True
-                    curr_type = reading_type
-                    curr_start = recorded_at
+                start_excursion(recorded_at, reading_type, temp)
+            elif reading_type == curr_type:
+                assert curr_last_out is not None
+                assert curr_peak is not None
+                gap_minutes = (recorded_at - curr_last_out).total_seconds() / 60.0
+                allowed_gap = (
+                    merge_gap_minutes
+                    if last_safe_at is not None
+                    else max_sensor_gap_minutes
+                )
+                if gap_minutes <= allowed_gap:
+                    last_safe_at = None
                     curr_last_out = recorded_at
-                    curr_peak = temp
+                    if curr_type == "high_temp":
+                        curr_peak = max(curr_peak, temp)
+                    else:
+                        curr_peak = min(curr_peak, temp)
+                else:
+                    finalize_candidate()
+                    start_excursion(recorded_at, reading_type, temp)
+            else:
+                # Type changed (e.g. from high to low)
+                finalize_candidate()
+                start_excursion(recorded_at, reading_type, temp)
         else:
             # Temperature is within safe range
             if in_excursion:
-                gap_minutes = (recorded_at - curr_last_out).total_seconds() / 60.0  # type: ignore[operator]
+                assert curr_last_out is not None
+                if last_safe_at is None:
+                    last_safe_at = recorded_at
+                gap_minutes = (recorded_at - curr_last_out).total_seconds() / 60.0
                 if gap_minutes > merge_gap_minutes:
                     # Safe range duration exceeded merge gap -> excursion ended
                     finalize_candidate()

@@ -197,11 +197,12 @@ def compact_old_readings(
 
     The raw rows are removed only after the hourly rows are written, so a
     crash in between leaves the raw data in place. Every shipment is
-    committed on its own, because dropping the raw rows needs a short
-    exclusive lock on the readings table.
+    committed on its own so transaction locks stay bounded per batch.
     """
     if not 1 <= retention_days <= 3650:
         raise ValueError("retention_days must be between 1 and 3650")
+    if not 1 <= batch_size <= 50_000:
+        raise ValueError("batch_size must be between 1 and 50000")
     now = now or datetime.now(UTC)
     cutoff = now - timedelta(days=retention_days)
 
@@ -230,9 +231,7 @@ def compact_old_readings(
         if summary["compacted_readings"] == 0:
             continue
         db.flush()
-        removed = _delete_raw_readings(db, shipment.id, cutoff)
-        # Commit per shipment so the exclusive lock on the readings table is
-        # held for one shipment only, not for the whole run.
+        removed = _delete_raw_readings(db, shipment.id, cutoff, batch_size=batch_size)
         db.commit()
         totals["shipments"] += 1
         totals["compacted_readings"] += summary["compacted_readings"]
@@ -244,28 +243,46 @@ def compact_old_readings(
     return totals
 
 
-def _delete_raw_readings(db: Session, shipment_id: UUID, cutoff: datetime) -> int:
+def _delete_raw_readings(
+    db: Session,
+    shipment_id: UUID,
+    cutoff: datetime,
+    *,
+    batch_size: int = DEFAULT_BATCH_SIZE,
+) -> int:
     """Remove the raw readings that have been folded into hourly rows."""
-    before = db.scalar(
-        select(func.count(TemperatureReading.id)).where(
-            TemperatureReading.shipment_id == shipment_id,
-            TemperatureReading.recorded_at < cutoff,
-        )
-    )
-    # The table is append only for the application role; the maintenance job is
-    # the one process allowed to drop the rows it already summarised.
-    db.execute(text("ALTER TABLE temperature_readings DISABLE TRIGGER USER"))
+    if not 1 <= batch_size <= 50_000:
+        raise ValueError("batch_size must be between 1 and 50000")
+
+    # The table is append-only for the application role; this transaction-scoped
+    # setting lets trg_temperature_readings_append_only() allow DELETEs here
+    # without disabling the trigger globally via ALTER TABLE.
+    total_deleted = 0
+    db.execute(text("SET LOCAL app.telemetry_compaction = 'on'"))
     try:
-        db.execute(
-            text(
-                "DELETE FROM temperature_readings "
-                "WHERE shipment_id = :shipment_id AND recorded_at < :cutoff"
-            ),
-            {"shipment_id": shipment_id, "cutoff": cutoff},
-        )
+        while True:
+            result = db.execute(
+                text(
+                    "DELETE FROM temperature_readings "
+                    "WHERE id IN ("
+                    "    SELECT id FROM temperature_readings "
+                    "    WHERE shipment_id = :shipment_id AND recorded_at < :cutoff "
+                    "    LIMIT :batch_size"
+                    ")"
+                ),
+                {
+                    "shipment_id": shipment_id,
+                    "cutoff": cutoff,
+                    "batch_size": batch_size,
+                },
+            )
+            batch_deleted = int(result.rowcount or 0)
+            total_deleted += batch_deleted
+            if batch_deleted < batch_size:
+                break
     finally:
-        db.execute(text("ALTER TABLE temperature_readings ENABLE TRIGGER USER"))
-    return int(before or 0)
+        db.execute(text("SET LOCAL app.telemetry_compaction = 'off'"))
+    return total_deleted
 
 
 def main() -> None:

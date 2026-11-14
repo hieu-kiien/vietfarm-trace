@@ -456,10 +456,6 @@ def get_shipment_violations(
         ).all()
     )
 
-    if not records:
-        records = sync_shipment_violations_and_events(db, principal, shipment)
-        db.commit()
-
     return [
         TelemetryViolationRead(
             id=r.id,

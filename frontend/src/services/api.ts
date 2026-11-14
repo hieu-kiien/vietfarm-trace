@@ -56,10 +56,7 @@ function resolveBaseUrl(): string {
   if (envUrl) {
     return envUrl.replace(/\/$/, '')
   }
-  if (import.meta.env.DEV) {
-    return ''
-  }
-  return 'https://ttcs-backend-staging.onrender.com'
+  return ''
 }
 
 export const API_BASE_URL = resolveBaseUrl()
