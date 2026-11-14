@@ -57,4 +57,6 @@ def test_legacy_revision_08_precedes_harvest_schema_and_handover_migrations():
     assert fix_public_trace_and_pii.down_revision == "20261021_43"
     fix_append_event_chain_head = script.get_revision("20261025_45")
     assert fix_append_event_chain_head.down_revision == "20261021_44"
-    assert script.get_current_head() == "20261025_45"
+    compaction_trigger_bypass = script.get_revision("20261114_46")
+    assert compaction_trigger_bypass.down_revision == "20261025_45"
+    assert script.get_current_head() == "20261114_46"
