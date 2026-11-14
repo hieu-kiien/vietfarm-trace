@@ -85,7 +85,7 @@ HTML_LANDING = """<!DOCTYPE html>
   <div class="card">
     <div class="status-badge"><span class="status-dot"></span> Máy chủ Backend đang Hoạt động (Online)</div>
     <h1>AgroChain Backend API</h1>
-    <p class="desc">Bạn đang truy cập vào cổng dịch vụ API của hệ thống Giám sát Chuỗi lạnh &amp; Truy xuất Nguồn gốc Nông sản (Nhóm TTCS_T926_K18C4_N3 — TTCS).</p>
+    <p class="desc">Bạn đang truy cập vào cổng dịch vụ API của hệ thống Giám sát Chuỗi lạnh &amp; Truy xuất Nguồn gốc Nông sản VietFarm Trace.</p>
     <div class="btn-group">
       <a href="https://ttcs-frontend-staging.onrender.com" class="btn btn-primary">
         🚀 Mở Giao diện Web Người dùng (Frontend)
@@ -95,7 +95,7 @@ HTML_LANDING = """<!DOCTYPE html>
       </a>
     </div>
     <div class="note">
-      💡 <b>Dành cho thành viên nhóm:</b> Để sử dụng phần mềm, các bạn chỉ cần bấm vào nút <b>Mở Giao diện Web</b> ở trên. Toàn bộ tính năng đều có thể dùng trực tiếp trên trình duyệt.
+      💡 <b>Hướng dẫn nhanh:</b> Mở <b>Giao diện Web</b> để dùng toàn bộ tính năng truy xuất nguồn gốc trên trình duyệt, hoặc mở <b>Swagger UI</b> để kiểm thử các endpoint API.
     </div>
   </div>
 </body>
