@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     PUBLIC_TRACE_CACHE_TTL_SECONDS: int = Field(default=60, ge=0, le=3600)
     PUBLIC_TRACE_RATE_LIMIT_CODES: int = Field(default=30, ge=1, le=1000)
     PUBLIC_TRACE_RATE_WINDOW_SECONDS: int = Field(default=60, ge=1, le=3600)
+    TRUST_PROXY_HEADERS: bool = False
+    FORWARDED_ALLOW_IPS: str = "127.0.0.1"
     SESSION_COOKIE_NAME: str = "__Host-session"
     SESSION_COOKIE_SAMESITE: str = "none"
     SESSION_COOKIE_SECURE: bool = True

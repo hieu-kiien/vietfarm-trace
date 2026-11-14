@@ -22,13 +22,27 @@ _RATE_LIMIT_DETAIL = (
 )
 
 
+def _extract_client_ip(request: Request) -> str:
+    """Resolve caller IP, trusting proxy headers only when explicitly enabled."""
+    if settings.TRUST_PROXY_HEADERS:
+        forwarded_for = request.headers.get("x-forwarded-for", "")
+        if forwarded_for:
+            first_hop = forwarded_for.split(",", 1)[0].strip()
+            if first_hop:
+                return first_hop
+        real_ip = request.headers.get("x-real-ip", "").strip()
+        if real_ip:
+            return real_ip
+    return request.client.host if request.client else "unknown"
+
+
 @router.get("/trace/{lot_code}")
 def get_public_trace(
     lot_code: str,
     request: Request,
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _extract_client_ip(request)
     normalized = (lot_code or "").strip().upper()
 
     # Đếm mọi lượt gọi, kể cả mã không tồn tại (S-50).
@@ -89,7 +103,7 @@ def get_public_lot_route(
     The coordinates are rounded to the district level, so the exact plot never
     leaves the system.
     """
-    client_ip = request.client.host if request.client else "unknown"
+    client_ip = _extract_client_ip(request)
     normalized = (lot_code or "").strip().upper()
     if public_trace_limiter.is_over_limit(client_ip, normalized):
         raise HTTPException(

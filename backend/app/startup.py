@@ -102,18 +102,27 @@ def main() -> None:
     )
 
     port = runtime_environment.get("PORT", "8000")
+    command = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        port,
+    ]
+    if settings.TRUST_PROXY_HEADERS:
+        command.extend(
+            [
+                "--proxy-headers",
+                "--forwarded-allow-ips",
+                settings.FORWARDED_ALLOW_IPS,
+            ]
+        )
     os.execvpe(
         sys.executable,
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "app.main:app",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            port,
-        ],
+        command,
         runtime_environment,
     )
 

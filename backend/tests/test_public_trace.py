@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.core.auth import Principal
+from app.core.config import settings
 from app.core.public_fields import PUBLIC_TRACE_FIELDS
 from app.services import event_service, public_trace_cache, public_trace_limiter
 from tests import test_sprint3_lineage as fixtures
@@ -223,3 +224,48 @@ def test_public_cache_stores_only_projection():
     finally:
         public_trace_cache.invalidate(key)
     assert public_trace_cache.get(key) is None
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_isolates_clients_when_proxy_headers_trusted(monkeypatch):
+    """Khi TRUST_PROXY_HEADERS=True, X-Forwarded-For tách bucket theo IP thực."""
+    monkeypatch.setattr(settings, "TRUST_PROXY_HEADERS", True)
+    async with client() as api:
+        for index in range(30):
+            response = await api.get(
+                f"/api/v1/public/trace/XFF{index:05d}",
+                headers={"X-Forwarded-For": "203.0.113.10, 10.0.0.1"},
+            )
+            assert response.status_code == 404, response.text
+
+        blocked = await api.get(
+            "/api/v1/public/trace/XFF99999",
+            headers={"X-Forwarded-For": "203.0.113.10, 10.0.0.1"},
+        )
+        other_client = await api.get(
+            "/api/v1/public/trace/XFF99999",
+            headers={"X-Forwarded-For": "198.51.100.7"},
+        )
+
+    assert blocked.status_code == 429
+    assert other_client.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_ignores_spoofed_xff_when_proxy_headers_disabled(monkeypatch):
+    """Khi TRUST_PROXY_HEADERS=False, giả mạo X-Forwarded-For không né được rate limit."""
+    monkeypatch.setattr(settings, "TRUST_PROXY_HEADERS", False)
+    async with client() as api:
+        for index in range(30):
+            response = await api.get(
+                f"/api/v1/public/trace/SPOOF{index:03d}",
+                headers={"X-Forwarded-For": f"198.51.100.{index + 1}"},
+            )
+            assert response.status_code == 404, response.text
+
+        blocked = await api.get(
+            "/api/v1/public/trace/SPOOF999",
+            headers={"X-Forwarded-For": "203.0.113.250"},
+        )
+
+    assert blocked.status_code == 429

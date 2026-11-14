@@ -1,16 +1,12 @@
-# N3-141 / R-06 — Xoá dữ liệu định danh mà chuỗi hash vẫn nguyên vẹn
+# Xoá dữ liệu định danh cá nhân (PII) mà chuỗi hash vẫn nguyên vẹn
 
-**Trạng thái:** Đã phê duyệt và triển khai hoàn tất (S-56 / `N3-75`, migration `20261021_44`).
-**Ticket:** N3-141 (R-06). Liên quan: S-56 (N3-75), T-23 (N3-99).
-**Mức rủi ro theo kế hoạch:** ảnh hưởng Cao, khả năng Trung bình → **Đã giảm thiểu và kiểm chứng bằng kiểm thử tự động**.
+**Trạng thái:** Đã triển khai và kiểm chứng (`migration 20261021_44`).
 
 ## 1. Vấn đề
 
 Nông hộ có quyền yêu cầu xoá dữ liệu định danh cá nhân. Nếu xoá bằng cách sửa
 hoặc làm rỗng dữ liệu đã băm thì chuỗi hash mất hiệu lực và không còn chứng minh
-được tính toàn vẹn. Phát hiện muộn — khi đã có nhiều sự kiện — thì không thể sửa
-quyết định kiến trúc mà không phá dữ liệu đã ghi. Vì vậy phải chốt cách làm
-trước Sprint 5 và áp ngay vào S-56.
+được tính toàn vẹn. Vì vậy hệ thống tách định danh khỏi phần dữ liệu bị băm ngay từ thiết kế.
 
 ## 2. Hiện trạng & Kiến trúc đã triển khai (đối chiếu mã nguồn)
 
@@ -30,7 +26,7 @@ UPDATE/DELETE và API không có route sửa/xoá sự kiện.
 
 ### 2.2 Dữ liệu cá nhân nằm ở đâu và cách xử lý
 
-| Nơi lưu | Trường dữ liệu | Nằm trong hash? | Cơ chế xử lý đã triển khai (`N3-75`) |
+| Nơi lưu | Trường dữ liệu | Nằm trong hash? | Cơ chế xử lý đã triển khai |
 | --- | --- | --- | --- |
 | `events.payload` | Chỉ lưu UUID và trường nghiệp vụ theo allowlist | Có | Chặn trường PII ngay từ lúc ghi (`validate_no_pii_in_payload`); không bao giờ sửa sự kiện đã băm |
 | `users` | `email`, `full_name` | Không | Ẩn danh tại chỗ qua `POST /api/v1/users/{user_id}/anonymize` (`deleted+<uuid>@anonymized.invalid`, `"Đã xoá theo yêu cầu"`), giữ nguyên `id` để không gãy khóa ngoại và chuỗi hash |
@@ -41,8 +37,8 @@ UPDATE/DELETE và API không có route sửa/xoá sự kiện.
 
 `payload_redacted` trong `readable_events` chỉ là lớp hiển thị theo quyền: payload
 gốc vẫn còn trong DB và hash vẫn tính trên payload gốc. Việc đáp ứng quyền xoá dữ
-liệu cá nhân của nông hộ được thực hiện bằng cơ chế **tách định danh khỏi payload
-băm và ẩn danh trực tiếp bản ghi `users`** (`N3-75`).
+dữ liệu cá nhân của nông hộ được thực hiện bằng cơ chế **tách định danh khỏi payload
+băm và ẩn danh trực tiếp bản ghi `users`**.
 
 ## 3. Quyết định kiến trúc đã áp dụng: tách định danh, chỉ tham chiếu bằng UUID
 
@@ -89,12 +85,12 @@ băm và ẩn danh trực tiếp bản ghi `users`** (`N3-75`).
 ## 6. Giới hạn còn lại đã được ghi nhận
 
 - Quản trị viên DB tối cao vẫn có thể viết lại cả dữ liệu và hash; giới hạn này đã ghi ở
-  [N3-4-INTEGRITY](N3-4-INTEGRITY.md) và không thay đổi bởi quyết định này.
+  [EVENT-HASH-CHAIN.md](EVENT-HASH-CHAIN.md) và không thay đổi bởi quyết định này.
 - Dữ liệu trình diễn (`seed_demo.py`) chỉ dùng tên và email giả lập, tuyệt đối không chứa
   thông tin cá nhân thật.
 
 ## 7. Liên kết
 
-- S-56 (`N3-75`): `backend/app/services/user_service.py`, `backend/tests/test_pii_anonymization.py`.
+- Triển khai & Kiểm thử: `backend/app/services/user_service.py`, `backend/tests/test_pii_anonymization.py`.
 - Migration: `backend/alembic/versions/20261021_44_user_pii_anonymization_s56.py`.
-- [Chuỗi hash và giới hạn](N3-4-INTEGRITY.md), [quyền DB](database.md).
+- [Chuỗi hash và giới hạn](EVENT-HASH-CHAIN.md), [quyền DB](database.md).

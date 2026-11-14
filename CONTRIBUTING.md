@@ -4,9 +4,7 @@ Tài liệu này quy định quy trình quản lý mã nguồn, tiêu chuẩn ch
 
 Tài liệu liên quan:
 
-- [Definition of Done và Definition of Ready](docs/DOD-DOR.md) — điều kiện trước khi nhận việc và trước khi chuyển trạng thái hoàn thành.
-- [Cách dùng Jira của nhóm](docs/JIRA-GUIDE.md) — cách cập nhật bình luận, chuyển trạng thái và vai trò từng thành viên.
-- [Vận hành hệ thống](docs/OPERATIONS.md) — kiểm tra sau triển khai, job bảo trì và cấu hình hạ tầng staging.
+- [Vận hành hệ thống](docs/OPERATIONS.md) — kiểm tra sau triển khai, job bảo trì và cấu hình hạ tầng.
 
 ## 1. Quy trình quản lý nhánh (Git Branching)
 

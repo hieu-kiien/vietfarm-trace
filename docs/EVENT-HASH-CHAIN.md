@@ -1,4 +1,4 @@
-# N3-4 — Chọn cơ chế kiểm tra toàn vẹn sự kiện
+# Cơ chế kiểm tra toàn vẹn chuỗi sự kiện (SHA-256 / RFC 8785)
 
 ## Quyết định
 Dùng chuỗi SHA-256 kết hợp quyền DB và trigger chỉ thêm. Không dùng blockchain vì phạm vi dự án có DB quản lý tập trung, cần triển khai đơn giản và chưa có yêu cầu đồng thuận giữa nhiều bên độc lập.

@@ -12,9 +12,9 @@
 - **Quản trị hệ thống (`system_admin`):** Quản lý tổ chức, người dùng, danh mục nông sản, giám sát tổng thể chuỗi lạnh, quét toàn vẹn định kỳ và thực hiện ẩn danh dữ liệu định danh cá nhân (PII) theo yêu cầu.
 - **Người tiêu dùng (Công khai):** Quét mã QR `30×30 mm` hoặc nhập mã lô để xem hành trình nông sản, bản đồ di chuyển, trạng thái kiểm định chuỗi lạnh, trạng thái thu hồi và tải báo cáo PDF mà không cần đăng nhập.
 
-## 2. Phạm vi sản phẩm đã hoàn thiện (Sprint 1 – Sprint 8)
+## 2. Phạm vi sản phẩm đã hoàn thiện
 
-Toàn bộ các phân hệ từ Sprint 1 đến Sprint 8 (`N3-1` → `N3-160`) đã được triển khai và kiểm chứng:
+Các phân hệ cốt lõi đã được triển khai và kiểm thử tích hợp:
 
 1. **Xác thực, RBAC & Cô lập dữ liệu đa tổ chức (PostgreSQL RLS):** Đăng nhập JWT, phân quyền theo vai trò, quản lý thành viên, mời thành viên bằng đường dẫn token và ẩn danh PII không ảnh hưởng chuỗi băm.
 2. **Danh mục nông sản, Vùng trồng & Lô thu hoạch:** Khai báo nông sản kèm ngưỡng nhiệt độ lạnh, vùng trồng kèm tọa độ GPS, lô thu hoạch, vật tư sử dụng, công đoạn chế biến và nhập dữ liệu hàng loạt qua CSV.
@@ -22,8 +22,6 @@ Toàn bộ các phân hệ từ Sprint 1 đến Sprint 8 (`N3-1` → `N3-160`) �
 4. **Giám sát Chuỗi lạnh & Cảm biến tự động:** Quản lý chuyến vận chuyển lạnh, tiếp nhận dữ liệu nhiệt độ/độ ẩm từ thiết bị qua `X-Sensor-Key`, tự động phát hiện vi phạm ngưỡng nhiệt độ liên tiếp, biểu đồ nhiệt độ theo thời gian thực và nén dữ liệu cảm biến theo giờ.
 5. **Thu hồi khẩn cấp & Trung tâm thông báo:** Thu hồi tự động lan truyền xuôi dòng theo đồ thị phả hệ đến mọi lô con/cháu chưa tiêu thụ, gửi thông báo nội bộ & email thu hồi, theo dõi xác nhận thu hồi bất biến của từng đơn vị.
 6. **Nhãn QR chuẩn in ấn & Báo cáo PDF A4:** Sinh mã QR kèm nhãn in `30×30 mm`, trang tra cứu công khai tích hợp bản đồ hành trình và xuất báo cáo truy xuất nguồn gốc PDF chuẩn A4 tiếng Việt.
-
-Chi tiết tiêu chí nghiệm thu xem tại [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
 
 ## 3. Nguyên tắc thiết kế giao diện (VietFarm Trace v3)
 
@@ -37,4 +35,4 @@ Chi tiết tiêu chí nghiệm thu xem tại [docs/ACCEPTANCE.md](docs/ACCEPTANC
 - Tầng API kiểm tra quyền RBAC kết hợp tầng cơ sở dữ liệu PostgreSQL kiểm tra **Row-Level Security (RLS)** theo phiên làm việc; các trigger cơ sở dữ liệu chặn sửa/xóa bản ghi đối với tài khoản runtime trên các bảng bất biến (`events`, `temperature_readings`, `recall_confirmations`, `audit_logs`).
 - Chuỗi băm `SHA-256` chuẩn hóa theo **RFC 8785** giúp phát hiện ngay lập tức mọi hành vi sửa đổi nội dung sự kiện hoặc làm đứt gãy thứ tự chuỗi khi đối chiếu. Như đã ghi nhận rõ trong hồ sơ kiến trúc, cơ chế này không thay thế chữ ký số phần cứng hoặc chống lại quản trị viên cơ sở dữ liệu tối cao viết lại toàn bộ chuỗi.
 
-Chi tiết kỹ thuật xem tại [docs/N3-4-INTEGRITY.md](docs/N3-4-INTEGRITY.md), [docs/database.md](docs/database.md) và hướng dẫn chạy tại [README.md](README.md).
+Chi tiết kỹ thuật xem tại [docs/EVENT-HASH-CHAIN.md](docs/EVENT-HASH-CHAIN.md), [docs/database.md](docs/database.md) và hướng dẫn chạy tại [README.md](README.md).
