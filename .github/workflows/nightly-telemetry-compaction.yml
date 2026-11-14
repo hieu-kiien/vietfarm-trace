@@ -5,9 +5,6 @@ name: Nightly Telemetry Compaction
 # readings of every organization into hourly rows and then drops them.
 
 on:
-  schedule:
-    # 02:40 every day (UTC), after the nightly backup at 02:15
-    - cron: "40 2 * * *"
   workflow_dispatch:
     inputs:
       retention_days:

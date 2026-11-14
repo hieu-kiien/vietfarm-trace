@@ -1,6 +1,6 @@
 # Định hướng Sản phẩm — VietFarm Trace (AgroChain)
 
-Ứng dụng web quản lý và truy xuất nguồn gốc chuỗi lạnh nông sản từ vùng trồng đến phân phối và người tiêu dùng. Dự án học phần Thực tập Cơ sở (TTCS) của nhóm **TTCS_T926_K18C4_N3**; dữ liệu trình diễn là dữ liệu giả lập phục vụ kiểm thử và bảo vệ đồ án.
+Ứng dụng web quản lý và truy xuất nguồn gốc chuỗi lạnh nông sản từ vùng trồng đến phân phối và người tiêu dùng. Dữ liệu trình diễn được thiết kế phục vụ kiểm thử quy trình chuỗi lạnh và kiểm chứng toàn vẹn chuỗi băm.
 
 ## 1. Nhóm người sử dụng
 

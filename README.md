@@ -1,17 +1,17 @@
 # VietFarm Trace (AgroChain) — Hệ thống Truy xuất Nguồn gốc Chuỗi lạnh Nông sản
 
-Dự án học phần Thực tập Cơ sở (TTCS) — Nhóm **TTCS_T926_K18C4_N3** (`N3-1` → `N3-160`, hoàn thiện đầy đủ 8 Sprint).
+[![CI Pipeline](https://github.com/hieu-kiien/vietfarm-trace/actions/workflows/ci.yml/badge.svg)](https://github.com/hieu-kiien/vietfarm-trace/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 Hệ thống quản lý và truy xuất nguồn gốc nông sản xuyên suốt từ **vùng trồng → thu hoạch → sơ chế & vật tư → tách/gộp phả hệ → bàn giao → vận chuyển chuỗi lạnh (giám sát cảm biến nhiệt độ/độ ẩm tự động) → phân phối/tiêu thụ → thu hồi khẩn cấp theo đồ thị phả hệ → tra cứu công khai qua QR 30×30 mm và xuất báo cáo PDF A4**.
 
 ---
 
-## 1. Liên kết triển khai (Staging)
+## 1. Liên kết triển khai & Mục lục kỹ thuật
 
-- **Giao diện Web (Frontend Staging):** [https://ttcs-frontend-staging.onrender.com](https://ttcs-frontend-staging.onrender.com)
+- **Giao diện Web (Frontend Demo):** [https://ttcs-frontend-staging.onrender.com](https://ttcs-frontend-staging.onrender.com) *(backend triển khai trên Render Free Tier có thể tạm ngủ khi không hoạt động; chạy đầy đủ cả hệ thống cục bộ chỉ bằng `docker compose up --build`)*
 - **Tài liệu API tương tác (Swagger / OpenAPI):** [https://ttcs-backend-staging.onrender.com/docs](https://ttcs-backend-staging.onrender.com/docs)
-- **Kiểm tra trạng thái hệ thống (Health / Version):** [`/health`](https://ttcs-backend-staging.onrender.com/health) · [`/version`](https://ttcs-backend-staging.onrender.com/version)
-- **Mục lục tài liệu kỹ thuật & nghiệm thu:** [docs/README.md](docs/README.md)
+- **Mục lục tài liệu kỹ thuật & kiến trúc:** [docs/README.md](docs/README.md)
 
 ---
 

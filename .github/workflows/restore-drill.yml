@@ -9,9 +9,6 @@ name: Restore Drill
 # minutes of the drill.
 
 on:
-  schedule:
-    # 03:40 every month, after the nightly backup and the compaction window
-    - cron: "40 3 1 * *"
   workflow_dispatch:
     inputs:
       use_external_store:

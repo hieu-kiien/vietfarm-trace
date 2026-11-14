@@ -5,9 +5,6 @@ name: Nightly Database Backup
 # workflow artifact so a redeploy never destroys the backups.
 
 on:
-  schedule:
-    # 02:15 every day (UTC)
-    - cron: "15 2 * * *"
   workflow_dispatch:
     inputs:
       keep:

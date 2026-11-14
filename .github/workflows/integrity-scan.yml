@@ -5,9 +5,6 @@ name: Weekly Integrity Scan
 # the lots and the events of every organization.
 
 on:
-  schedule:
-    # 03:20 every Monday (UTC)
-    - cron: "20 3 * * 1"
   workflow_dispatch:
     inputs:
       rotation_days:
