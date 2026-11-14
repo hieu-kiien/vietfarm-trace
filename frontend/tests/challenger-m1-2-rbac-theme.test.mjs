@@ -209,15 +209,21 @@ test('RBAC 1.6: WorkspaceSidebar for "system_admin" enables all 3 governance too
 // SECTION 2: CRYPTOGRAPHIC HASH CHAIN AUDIT BADGE FOR NON-ADMIN ROLES
 // =========================================================================
 
-test('AUDIT BADGE 2.1: Non-admin roles (grower, transporter, distributor) render verified hash chain badge via getLotHistory without calling privileged /integrity (avoiding 403 Forbidden)', async () => {
-  const dom = new JSDOM('<div id="root"></div>', { url: 'http://test.local/lots/test-lot-id' })
+function setupDom(url) {
+  const dom = new JSDOM('<div id="root"></div>', { url })
   for (const key of ['window', 'document', 'HTMLElement', 'HTMLDivElement', 'HTMLDialogElement', 'Element', 'Node', 'Event', 'sessionStorage']) {
     globalThis[key] = dom.window[key]
   }
+  Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true })
   if (!dom.window.HTMLDialogElement?.prototype?.showModal) {
     dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
     dom.window.HTMLDialogElement.prototype.close = function () { this.open = false }
   }
+  return dom
+}
+
+test('AUDIT BADGE 2.1: Non-admin roles (grower, transporter, distributor) render verified hash chain badge via getLotHistory without calling privileged /integrity (avoiding 403 Forbidden)', async () => {
+  const dom = setupDom('http://test.local/lots/test-lot-id')
 
   const sampleLot = {
     id: 'lot-chain-1',
@@ -344,10 +350,7 @@ test('AUDIT BADGE 2.1: Non-admin roles (grower, transporter, distributor) render
 })
 
 test('AUDIT BADGE 2.2: Cryptographic Hash Chain Badge displays warning and identifies invalid sequence on tamper', async () => {
-  const dom = new JSDOM('<div id="root"></div>', { url: 'http://test.local/lots/tampered-lot' })
-  for (const key of ['window', 'document', 'HTMLElement', 'HTMLDivElement', 'HTMLDialogElement', 'Element', 'Node', 'Event', 'sessionStorage']) {
-    globalThis[key] = dom.window[key]
-  }
+  const dom = setupDom('http://test.local/lots/tampered-lot')
 
   const sampleLot = {
     id: 'lot-tampered',
